@@ -434,6 +434,10 @@
             <translation>添加</translation>
         </message>
         <message>
+            <source>Edit</source>
+            <translation>编辑</translation>
+        </message>
+        <message>
             <source>Remove</source>
             <translation>移除</translation>
         </message>

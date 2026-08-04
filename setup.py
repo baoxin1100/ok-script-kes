@@ -1,29 +1,36 @@
 import os
+import requests
 import setuptools
-import sys
 from get_pypi_latest_version import GetPyPiLatestVersion
 
 os.environ["PYTHONIOENCODING"] = "utf-8"
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-MODULE_NAME = "ok-script"
+MODULE_NAME = "ok-script-kes"
 
 obtainer = GetPyPiLatestVersion()
-latest_version = obtainer(MODULE_NAME)
-
-VERSION_NUM = os.environ.get('OK_SCRIPT_BUILD_VERSION') or obtainer.version_add_one(latest_version, add_patch=True)
+VERSION_NUM = os.environ.get('OK_SCRIPT_BUILD_VERSION')
+latest_version = None
+if VERSION_NUM is None:
+    try:
+        latest_version = obtainer(MODULE_NAME)
+        VERSION_NUM = obtainer.version_add_one(latest_version, add_patch=True)
+    except requests.HTTPError as error:
+        if error.response.status_code != 404:
+            raise
+        VERSION_NUM = "1.0.0"
 print(f'latest_version is {latest_version} new version is {VERSION_NUM}')
 
 setuptools.setup(
     name=MODULE_NAME,
     version=VERSION_NUM,
-    author="ok-oldking",
-    author_email="firedcto@gmail.com",
-    description="Automation with Computer Vision for Python",
+    author="baoxin1100",
+    author_email="879278510@qq.com",
+    description="Modified ok-script automation framework based on ok-script 1.0.181",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/ok-oldking/ok-script",
+    url="https://github.com/baoxin1100/ok-script-kes",
     packages=setuptools.find_packages(exclude=['tests', 'docs']),
     include_package_data=True,
     classifiers=[

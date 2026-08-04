@@ -6,6 +6,9 @@ from ok.gui.tasks.ModifyListDialog import ModifyListDialog
 from ok.gui.widget.UpdateConfigWidgetItem import value_to_string
 
 
+MAX_LIST_DISPLAY_LENGTH = 30
+
+
 class ModifyListItem(ConfigLabelAndWidget):
 
     def __init__(self, config_desc, config, key: str, options_available=None, allow_duplication=False):
@@ -17,6 +20,7 @@ class ModifyListItem(ConfigLabelAndWidget):
         self.switch_button = PushButton(self.tr('Modify'))
         self.switch_button.clicked.connect(self.clicked)
         self.list_text = BodyLabel("")
+        self.list_text.setWordWrap(False)
         self.update_value()
         self.add_widget(self.list_text, stretch=0)
         self.add_widget(self.switch_button, stretch=0)
@@ -25,14 +29,12 @@ class ModifyListItem(ConfigLabelAndWidget):
         items = self.config.get(self.key)
         if self.options_available is not None:
             items = [og.app.tr(item) for item in items]
-        total_length = sum(len(item) for item in items)
-
-        if total_length > 30:
-            display_text = "\n".join(items)
-        else:
-            display_text = value_to_string(items)
-
+        full_text = value_to_string(items)
+        display_text = full_text
+        if len(display_text) > MAX_LIST_DISPLAY_LENGTH:
+            display_text = f'{display_text[:MAX_LIST_DISPLAY_LENGTH - 3]}...'
         self.list_text.setText(display_text)
+        self.list_text.setToolTip(full_text if display_text != full_text else '')
 
     def clicked(self):
         dialog = ModifyListDialog(

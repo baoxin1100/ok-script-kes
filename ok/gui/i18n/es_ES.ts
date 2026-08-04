@@ -444,6 +444,10 @@
             <translation>Añadir</translation>
         </message>
         <message>
+            <source>Edit</source>
+            <translation>Editar</translation>
+        </message>
+        <message>
             <source>Remove</source>
             <translation>Eliminar</translation>
         </message>

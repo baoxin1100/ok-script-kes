@@ -220,6 +220,7 @@ def resize_window(hwnd, width, height):
         logger.info("Invalid window handle provided.")
         return False
     try:
+        monitor_left, monitor_top, monitor_right, monitor_bottom = get_window_monitor_work_area(hwnd)
         SWP_SHOWWINDOW = 0x0040
         SWP_NOZORDER = 0x0004
         SWP_NOREPOSITION = 0x0002
@@ -229,11 +230,11 @@ def resize_window(hwnd, width, height):
         left, top, right, bottom = win32gui.GetWindowRect(hwnd)
         window_width = right - left
         window_height = bottom - top
-        screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
-        screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
+        screen_width = monitor_right - monitor_left
+        screen_height = monitor_bottom - monitor_top
 
-        center_x = (screen_width - window_width) // 2
-        center_y = (screen_height - window_height) // 2
+        center_x = monitor_left + (screen_width - window_width) // 2
+        center_y = monitor_top + (screen_height - window_height) // 2
         SWP_NOSIZE = 0x0001
 
         user32.SetWindowPos(hwnd, None, center_x, center_y, 0, 0,
@@ -255,6 +256,12 @@ def resize_window(hwnd, width, height):
     except Exception as e:
         logger.error(f"Error resizing and centering window with handle {hwnd}: {e}")
         return False
+
+
+def get_window_monitor_work_area(hwnd):
+    monitor = win32api.MonitorFromWindow(hwnd, win32con.MONITOR_DEFAULTTONEAREST)
+    left, top, right, bottom = win32api.GetMonitorInfo(monitor)['Work']
+    return left, top, right, bottom
 
 
 def ratio_text_to_number(supported_ratio):

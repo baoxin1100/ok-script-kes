@@ -10,7 +10,8 @@ from ok.gui.Communicate import communicate
 from ok.gui.util.Alert import alert_info
 from ok.util.GlobalConfig import basic_options
 from ok.util.logger import Logger
-from ok.util.window import show_title_bar, get_window_bounds, resize_window, is_foreground_window, find_hwnd
+from ok.util.window import (show_title_bar, get_window_bounds, resize_window, is_foreground_window, find_hwnd,
+                            get_window_monitor_work_area)
 
 from ok.device.capture_methods.base import BaseWindowsCaptureMethod
 from ok.device.capture_methods.bitblt_utils import get_crop_point
@@ -136,8 +137,9 @@ class HwndWindow:
             return False
         if self.hwnd and self.window_width > 0:
             show_title_bar(self.hwnd)
-            screen_width = win32api.GetSystemMetrics(0)
-            screen_height = win32api.GetSystemMetrics(1)
+            monitor_left, monitor_top, monitor_right, monitor_bottom = get_window_monitor_work_area(self.hwnd)
+            screen_width = monitor_right - monitor_left
+            screen_height = monitor_bottom - monitor_top
             x, y, window_width, window_height, width, height, scaling = get_window_bounds(self.hwnd)
             title_height = window_height - height
             logger.info(f'try_resize_to {x, y, window_width, window_height, width, height, scaling} ')

@@ -444,6 +444,10 @@
             <translation>新增</translation>
         </message>
         <message>
+            <source>Edit</source>
+            <translation>編輯</translation>
+        </message>
+        <message>
             <source>Remove</source>
             <translation>移除</translation>
         </message>

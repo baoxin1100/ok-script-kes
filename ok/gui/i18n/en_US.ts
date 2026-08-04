@@ -434,6 +434,10 @@
             <translation>Add</translation>
         </message>
         <message>
+            <source>Edit</source>
+            <translation>Edit</translation>
+        </message>
+        <message>
             <source>Remove</source>
             <translation>Remove</translation>
         </message>

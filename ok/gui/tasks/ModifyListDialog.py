@@ -43,9 +43,12 @@ class ModifyListDialog(MessageBoxBase):
         self.move_down_button.clicked.connect(self.move_down)
 
         self.add_button = None
+        self.edit_button = None
         if self.options_available is None:
             self.add_button = PushButton(FluentIcon.ADD, self.tr("Add"))
             self.add_button.clicked.connect(self.add_item)
+            self.edit_button = PushButton(FluentIcon.EDIT, self.tr("Edit"))
+            self.edit_button.clicked.connect(self.edit_item)
 
         self.remove_button = PushButton(FluentIcon.REMOVE, self.tr("Remove"))
         self.remove_button.clicked.connect(self.remove_item)
@@ -106,6 +109,7 @@ class ModifyListDialog(MessageBoxBase):
         actions_layout.addWidget(self.move_down_button)
         if self.options_available is None:
             actions_layout.addWidget(self.add_button)
+            actions_layout.addWidget(self.edit_button)
         actions_layout.addWidget(self.remove_button)
         actions_layout.addStretch(1)
 
@@ -131,7 +135,7 @@ class ModifyListDialog(MessageBoxBase):
     def _match_list_action_widths(self):
         buttons = [self.move_up_button, self.move_down_button, self.remove_button]
         if self.options_available is None:
-            buttons.append(self.add_button)
+            buttons.extend([self.add_button, self.edit_button])
         width = max(button.sizeHint().width() for button in buttons)
         for button in buttons:
             button.setFixedWidth(width)
@@ -141,6 +145,8 @@ class ModifyListDialog(MessageBoxBase):
         has_selection = row >= 0
         self.move_up_button.setEnabled(has_selection and row > 0)
         self.move_down_button.setEnabled(has_selection and row < self.list_widget.count() - 1)
+        if self.edit_button is not None:
+            self.edit_button.setEnabled(has_selection)
         self.remove_button.setEnabled(has_selection)
         self.update_option_buttons()
 
@@ -194,6 +200,14 @@ class ModifyListDialog(MessageBoxBase):
             self.list_widget.addItem(w.add_text_edit.text())
             self.list_widget.setCurrentRow(self.list_widget.count() - 1)
 
+    def edit_item(self):
+        current_item = self.list_widget.currentItem()
+        if current_item is None:
+            return
+        w = AddTextMessageBox(self.window(), title=self.tr('Edit'), text=current_item.text())
+        if w.exec():
+            current_item.setText(w.add_text_edit.text())
+
     def add_available_item(self, option):
         text = og.app.tr(option)
         if self.allow_duplication or all(
@@ -224,12 +238,13 @@ class ModifyListDialog(MessageBoxBase):
 class AddTextMessageBox(MessageBoxBase):
     """ Custom message box """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, title=None, text=''):
         super().__init__(parent)
-        self.titleLabel = SubtitleLabel(self.tr('Add'), self)
+        self.titleLabel = SubtitleLabel(title or self.tr('Add'), self)
         self.add_text_edit = LineEdit(self)
 
         self.add_text_edit.setClearButtonEnabled(True)
+        self.add_text_edit.setText(text)
 
         # add widget to view layout
         self.viewLayout.addWidget(self.titleLabel)
@@ -244,6 +259,9 @@ class AddTextMessageBox(MessageBoxBase):
         self.widget.setMinimumWidth(360)
         self.yesButton.setDisabled(True)
         self.add_text_edit.textChanged.connect(self._validate_text)
+        self._validate_text(text)
+        if text:
+            self.add_text_edit.selectAll()
 
     def _validate_text(self, text):
         self.yesButton.setEnabled(True if text is not None and text.strip() else False)

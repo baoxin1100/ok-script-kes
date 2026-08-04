@@ -445,6 +445,10 @@
             <translation>추가</translation>
         </message>
         <message>
+            <source>Edit</source>
+            <translation>편집</translation>
+        </message>
+        <message>
             <source>Remove</source>
             <translation>제거</translation>
         </message>

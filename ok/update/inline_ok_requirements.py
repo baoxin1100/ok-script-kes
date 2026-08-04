@@ -8,7 +8,7 @@ from ok.util.logger import Logger
 logger = Logger.get_logger(__name__)
 
 INLINED_REQUIREMENTS = {
-    'ok-script': 'ok',
+    'ok-script-kes': 'ok',
     'pyappify': 'pyappify',
 }
 

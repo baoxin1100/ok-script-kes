@@ -1,4 +1,5 @@
 recursive-include ok *
+include get_pypi_latest_version.py
 global-exclude *.pyc
 global-exclude *.log
 global-exclude *.log.*

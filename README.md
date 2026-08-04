@@ -1,4 +1,20 @@
 # ok-script
+
+## ok-script-kes
+
+`ok-script-kes` 是 `ok-script` 的修改版本，基于 `ok-script 1.0.181`。
+
+本版本增加和优化了以下功能：
+
+- 自动调整游戏窗口分辨率时适配副屏，窗口会保留在当前显示器。
+- 自由文本列表支持编辑已有选项。
+- 优化长列表显示，使用单行省略展示并通过悬浮提示查看完整内容。
+
+安装发行包：
+
+```commandline
+pip install ok-script-kes
+```
 * ok-script 是基于图像识别技术, 纯Python实现的, 支持Windows窗口和模拟器的自动化测试框架。
 * 框架包含UI, 截图, 输入, 设备控制, OCR, 模板匹配, 框框Debug浮层, 基于Github Action的测试, 打包, 升级/降级。
 * 基于开发一个工业级的自动化软件仅需几百行代码。
@@ -30,7 +46,7 @@
 
 * 在你的项目中通过pip依赖使用
 ```commandline
-pip install ok-script
+pip install ok-script-kes
 ```
 
 * 编译国际化文件
@@ -63,7 +79,7 @@ compile_i18n.cmd
   - [3. 自动化测试](docs/after_quick_start/README.md#3-自动化测试)
   - [4. 使用 GitHub Action 自动化打包与发布](docs/after_quick_start/README.md#4-使用-github-action-自动化打包与发布)
 * 开发者群: 938132715
-* pip [https://pypi.org/project/ok-script](https://pypi.org/project/ok-script)
+* pip [https://pypi.org/project/ok-script-kes](https://pypi.org/project/ok-script-kes)
 
 
 ## 使用ok-script的项目：
