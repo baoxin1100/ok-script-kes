@@ -7,19 +7,30 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
+from qfluentwidgets import ExpandLayout
 
 from ok import og
 from ok.gui.Communicate import communicate
 from ok.gui.tasks.TaskCard import TaskCard
 from ok.gui.tasks.TaskTab import TaskTab
+from ok.gui.tasks.LabelAndWidget import LabelAndWidget
+from ok.gui.widget.ExpandCardLayout import ExpandCardLayout
 
 
 class FakeConfig(dict):
     def get_default(self, key):
+        return None
+
+    def has_user_config(self):
+        return False
+
+
+class PopulatedFakeConfig(dict):
+    def get_default(self, key):
         return self.get(key)
 
     def has_user_config(self):
-        return bool(self)
+        return True
 
 
 class TestTaskUi(unittest.TestCase):
@@ -36,6 +47,21 @@ class TestTaskUi(unittest.TestCase):
     def tearDown(self):
         og.app = self.original_app
         og.executor = self.original_executor
+
+    def test_config_row_uses_a_spacer_for_extra_width(self):
+        row = LabelAndWidget(
+            'Local Client Notification',
+            'Send notifications through local QQ or WeChat clients')
+        row.resize(640, 90)
+        row.show()
+        QApplication.processEvents()
+        self.addCleanup(row.close)
+
+        self.assertEqual(0, row.layout.stretch(0))
+        self.assertEqual(2, row.layout.count())
+        self.assertEqual(1, row.layout.stretch(1))
+        self.assertIsNotNone(row.layout.itemAt(1).spacerItem())
+        self.assertGreater(row.layout.itemAt(1).spacerItem().geometry().width(), 0)
 
     def test_task_card_uses_single_line_compact_header(self):
         task = SimpleNamespace(
@@ -69,13 +95,20 @@ class TestTaskUi(unittest.TestCase):
             card.card.contentLabel.geometry().center().y(),
         )
 
-    def test_task_card_with_long_text_collapses_to_header_height(self):
-        values = {f"Option {index}": False for index in range(20)}
-        values["Long text"] = "A configuration value long enough to use the multiline text editor"
+    def test_task_cards_use_a_nested_expand_layout(self):
+        tab = TaskTab()
+        self.addCleanup(tab.close)
+
+        self.assertIsInstance(tab.taskCardLayout, ExpandLayout)
+        self.assertIs(tab.taskCardLayout, tab.task_cards_view.layout())
+        self.assertIsNot(tab.taskCardLayout, tab.view.layout())
+
+    def test_task_card_uses_native_expansion_state(self):
+        values = {"Long text": "A configuration value long enough to use the multiline text editor"}
         task = SimpleNamespace(
             name="Long text task",
             description="Collapse regression test",
-            config=FakeConfig(values),
+            config=PopulatedFakeConfig(values),
             default_config=values,
             config_description={},
             config_type={},
@@ -86,21 +119,25 @@ class TestTaskUi(unittest.TestCase):
             enabled=False,
         )
         card = TaskCard(task, onetime=False)
-        card.resize(1200, card.height())
-        card.show()
+        tab = TaskTab()
+        tab.add_task_card(card)
+        tab.resize(1200, 800)
+        tab.show()
         QApplication.processEvents()
+        self.addCleanup(tab.close)
         self.addCleanup(communicate.task.disconnect, card.update_buttons)
-        self.addCleanup(card.close)
 
         header_height = card.viewportMargins().top()
+
         card.setExpand(True)
         QTest.qWait(300)
         QApplication.processEvents()
-        self.assertGreater(card.height(), header_height)
+        self.assertTrue(card.isExpand)
 
         card.setExpand(False)
         QTest.qWait(300)
         QApplication.processEvents()
+        self.assertFalse(card.isExpand)
         self.assertEqual(header_height, card.height())
 
     def test_status_panel_stays_closed_until_a_different_task_starts(self):
