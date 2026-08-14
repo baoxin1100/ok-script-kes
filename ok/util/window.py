@@ -278,15 +278,30 @@ def compare_path_safe(str1, str2):
 
 
 def get_player_id_from_cmdline(cmdline):
-    for i in range(len(cmdline)):
-        if i != 0:
-            if cmdline[i].isdigit():
-                return int(cmdline[i])
+    # MuMu 15 includes a transient process id before the actual instance id:
+    # --restart-last-pid 68016 -v 0 --vm MuMuPlayer-15.0-0
+    # Prefer the explicit instance arguments so the process id is not mistaken
+    # for the emulator player id.
+    for i, arg in enumerate(cmdline[:-1]):
+        if arg == '-v' and cmdline[i + 1].isdigit():
+            return int(cmdline[i + 1])
+
+    for i, arg in enumerate(cmdline[:-1]):
+        if arg == '--vm':
+            value = re.search(r'-(\d+)$', cmdline[i + 1])
+            if value is not None:
+                return int(value.group(1))
+
     for i in range(len(cmdline)):
         if i != 0:
             value = re.search(r'index=(\d+)', cmdline[i])
             if value is not None:
                 return int(value.group(1))
+
+    for i in range(len(cmdline)):
+        if i != 0:
+            if cmdline[i].isdigit():
+                return int(cmdline[i])
     return 0
 
 
