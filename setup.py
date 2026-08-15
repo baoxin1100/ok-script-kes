@@ -1,7 +1,5 @@
 import os
-import requests
 import setuptools
-from get_pypi_latest_version import GetPyPiLatestVersion
 
 os.environ["PYTHONIOENCODING"] = "utf-8"
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -9,13 +7,24 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 MODULE_NAME = "ok-script-kes"
 
-obtainer = GetPyPiLatestVersion()
 VERSION_NUM = os.environ.get('OK_SCRIPT_BUILD_VERSION')
 latest_version = None
 if VERSION_NUM is None:
+    import requests
+    from packaging.version import Version
+
     try:
-        latest_version = obtainer(MODULE_NAME)
-        VERSION_NUM = obtainer.version_add_one(latest_version, add_patch=True)
+        response = requests.get(
+            f"https://pypi.org/pypi/{MODULE_NAME}/json",
+            timeout=30,
+        )
+        response.raise_for_status()
+        latest_version = response.json()["info"]["version"]
+        parsed_version = Version(latest_version)
+        VERSION_NUM = (
+            f"{parsed_version.major}.{parsed_version.minor}."
+            f"{parsed_version.micro + 1}"
+        )
     except requests.HTTPError as error:
         if error.response.status_code != 404:
             raise
