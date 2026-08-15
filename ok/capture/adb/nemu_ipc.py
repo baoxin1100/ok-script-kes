@@ -1,6 +1,7 @@
 import ctypes
 import json
 import os
+import re
 import sys
 import time
 from functools import wraps
@@ -17,6 +18,31 @@ from ok.capture.adb.timer import Timer
 from ok.capture.adb.util import ensure_time, random_rectangle_point
 
 logger = Logger.get_logger(__name__)
+
+
+def get_nemu_ipc_dll_candidates(nemu_folder: str) -> list[str]:
+    """Return IPC DLL candidates for legacy MuMu and nx_device >= 12."""
+    versioned_dlls = []
+    nx_device_folder = os.path.abspath(os.path.join(nemu_folder, 'nx_device'))
+    if os.path.isdir(nx_device_folder):
+        for entry in os.scandir(nx_device_folder):
+            if not entry.is_dir():
+                continue
+            version_match = re.fullmatch(r'(\d+)(?:\.(\d+))?', entry.name)
+            if version_match is None:
+                continue
+            version = (int(version_match.group(1)), int(version_match.group(2) or 0))
+            if version[0] < 12:
+                continue
+            versioned_dlls.append((version, os.path.join(
+                entry.path, 'shell', 'sdk', 'external_renderer_ipc.dll')))
+
+    candidates = [path for _, path in sorted(versioned_dlls, reverse=True)]
+    candidates.extend([
+        os.path.abspath(os.path.join(nemu_folder, 'shell', 'sdk', 'external_renderer_ipc.dll')),
+        os.path.abspath(os.path.join(nemu_folder, 'nx_main', 'sdk', 'external_renderer_ipc.dll')),
+    ])
+    return candidates
 
 
 class NemuIpcIncompatible(Exception):
@@ -214,13 +240,8 @@ class NemuIpcImpl:
         self.instance_id: int = instance_id
         self.display_id: int = display_id
 
-        # try to load dll from various path
-        list_dll = [
-            # MuMuPlayer12
-            os.path.abspath(os.path.join(nemu_folder, './shell/sdk/external_renderer_ipc.dll')),
-            # MuMuPlayer12 5.0
-            os.path.abspath(os.path.join(nemu_folder, './nx_device/12.0/shell/sdk/external_renderer_ipc.dll')),
-        ]
+        # MuMu 12+ stores the IPC DLL under a versioned nx_device directory.
+        list_dll = get_nemu_ipc_dll_candidates(nemu_folder)
         self.lib = None
         for ipc_dll in list_dll:
             if not os.path.exists(ipc_dll):
@@ -234,7 +255,7 @@ class NemuIpcImpl:
         if self.lib is None:
             # not found
             raise NemuIpcIncompatible(
-                f'NemuIpc requires MuMu12 version >= 3.8.13, please check your version. '
+                f'NemuIpc requires MuMu version >= 12, please check your version. '
                 f'None of the following path exists: {list_dll}')
         # success
         logger.info(

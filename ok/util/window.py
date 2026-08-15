@@ -319,8 +319,10 @@ def _match_class_name(hwnd_class, patterns):
     return -1
 
 
-def enum_child_windows(biggest, frame_aspect_ratio, frame_width, frame_height):
+def enum_child_windows(biggest, frame_aspect_ratio, frame_width, frame_height,
+                       largest_fallback=False):
     ratio_match = []
+    visible_children = []
 
     def child_callback(hwnd, _):
         visible = win32gui.IsWindowVisible(hwnd)
@@ -329,6 +331,17 @@ def enum_child_windows(biggest, frame_aspect_ratio, frame_width, frame_height):
         real_width = rect[2] - rect[0]
         real_height = rect[3] - rect[1]
         if visible and real_height > 0:
+            area = real_width * real_height
+            if real_width > 10 and real_height > 10:
+                visible_children.append((
+                    area,
+                    hwnd,
+                    win32gui.GetClassName(hwnd),
+                    rect[0] - biggest[4],
+                    rect[1] - biggest[5],
+                    real_width,
+                    real_height,
+                ))
             ratio = real_width / real_height
             difference = abs(ratio - frame_aspect_ratio)
             support = difference <= 0.01 * frame_aspect_ratio
@@ -345,6 +358,18 @@ def enum_child_windows(biggest, frame_aspect_ratio, frame_width, frame_height):
     if ratio_match:
         ratio_match.sort(key=lambda x: x[0])
         return ratio_match[0][1]
+    if largest_fallback and visible_children:
+        largest = max(visible_children, key=lambda item: item[0])
+        _, hwnd, class_name, x_offset, y_offset, real_width, real_height = largest
+        parent_area = biggest[2] * biggest[3]
+        area_ratio = largest[0] / parent_area if parent_area > 0 else 0
+        if area_ratio >= 0.5:
+            logger.info(
+                f'LDPlayer largest visible child selected hwnd={hwnd} '
+                f'class={class_name} offset={x_offset},{y_offset} '
+                f'size={real_width}x{real_height} area_ratio={area_ratio:.3f}'
+            )
+            return x_offset, y_offset, real_width, real_height
     return None
 
 
@@ -450,7 +475,18 @@ def find_hwnd(title, exe_names, frame_width, frame_height, player_id=-1, class_n
 
     x_offset, y_offset, real_width, real_height = 0, 0, biggest[2], biggest[3]
     if class_name is None and frame_aspect_ratio != 0:
-        matching_child = enum_child_windows(biggest, frame_aspect_ratio, frame_width, frame_height)
+        exe_path = os.path.normpath(biggest[1] or '').lower()
+        is_ldplayer = (
+            'leidian' in exe_path
+            or os.path.basename(exe_path) in {'dnplayer.exe', 'ldplayer.exe'}
+        )
+        matching_child = enum_child_windows(
+            biggest,
+            frame_aspect_ratio,
+            frame_width,
+            frame_height,
+            largest_fallback=is_ldplayer,
+        )
         if matching_child is not None:
             x_offset, y_offset, real_width, real_height = matching_child
         if real_width < 10 or real_height < 10:

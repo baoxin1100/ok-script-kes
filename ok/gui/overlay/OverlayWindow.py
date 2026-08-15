@@ -63,8 +63,8 @@ class OverlayWindow(OverlayWidget):
                 capture_y,
                 getattr(hwnd_window, 'window_width', 0),
                 getattr(hwnd_window, 'window_height', 0),
-                getattr(hwnd_window, 'width', 0),
-                getattr(hwnd_window, 'height', 0),
+                getattr(hwnd_window, 'real_width', 0) or getattr(hwnd_window, 'width', 0),
+                getattr(hwnd_window, 'real_height', 0) or getattr(hwnd_window, 'height', 0),
                 getattr(hwnd_window, 'scaling', 1.0) or 1.0,
             )
 

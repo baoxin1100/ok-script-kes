@@ -10,7 +10,7 @@ logger = Logger.get_logger(__name__)
 
 class NemuIpcCaptureMethod(BaseCaptureMethod):
     name = "Nemu Ipc Capture"
-    description = "mumu player 12 only"
+    description = "MuMu Player 12 or later"
 
     def __init__(self, device_manager, exit_event, width=0, height=0):
         super().__init__()
@@ -41,9 +41,12 @@ class NemuIpcCaptureMethod(BaseCaptureMethod):
         return os.path.dirname(os.path.dirname(self.emulator.path))
 
     def check_mumu_app_keep_alive_400(self):
+        instance_name = getattr(self.emulator, 'name', None)
+        if not instance_name:
+            instance_name = f'MuMuPlayer-12.0-{self.emulator.player_id}'
         file = os.path.abspath(os.path.join(
             self.base_folder(),
-            f'vms/MuMuPlayer-12.0-{self.emulator.player_id}/configs/customer_config.json'))
+            'vms', instance_name, 'configs', 'customer_config.json'))
 
         try:
             with open(file, mode='r', encoding='utf-8') as f:

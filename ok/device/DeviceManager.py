@@ -38,6 +38,13 @@ def resolve_emulator_window_exe(exe_path, instance_name=None):
         install_root, 'nx_device', version, 'shell', 'MuMuNxDevice.exe')
 
 
+def supports_nemu_ipc(preferred):
+    """Only MuMu emulator instances can use the proprietary Nemu IPC API."""
+    emulator = (preferred or {}).get('emulator')
+    emulator_type = getattr(emulator, 'type', None)
+    return emulator_type in {'MuMuPlayer', 'MuMuPlayerX', 'MuMuPlayer12'}
+
+
 class DeviceManager:
 
     def __init__(self, app_config, exit_event=None, global_config=None):
@@ -629,7 +636,18 @@ class DeviceManager:
                 logger.info(f'do_start use windows capture {self.hwnd_window.title}')
                 self.use_windows_capture()
             else:
-                if self.config.get('capture') == 'ipc':
+                use_nemu_ipc = (
+                    self.config.get('capture') == 'ipc'
+                    and supports_nemu_ipc(preferred)
+                )
+                if self.config.get('capture') == 'ipc' and not use_nemu_ipc:
+                    emulator = preferred.get('emulator')
+                    logger.warning(
+                        f"Nemu IPC is not supported by emulator type "
+                        f"{getattr(emulator, 'type', None)}; falling back to ADB capture"
+                    )
+                    self.config['capture'] = 'adb'
+                if use_nemu_ipc:
                     if not isinstance(self.capture_method, NemuIpcCaptureMethod):
                         if self.capture_method is not None:
                             self.capture_method.close()

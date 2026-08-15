@@ -237,6 +237,12 @@ class HwndWindow:
             window_width, window_height = self.window_width, self.window_height
             client_width, client_height = self.client_width, self.client_height
             width, height, scaling = self.width, self.height, self.scaling
+            old_real_geometry = (
+                self.real_x_offset,
+                self.real_y_offset,
+                self.real_width,
+                self.real_height,
+            )
             name, find_hwnd_res, exe_full_path, real_x_offset, real_y_offset, real_width, real_height, hwnds = find_hwnd(
                 self.title,
                 self.exe_names or self.device_manager.config.get('selected_exe'),
@@ -313,7 +319,13 @@ class HwndWindow:
 
                 if (window_width != self.window_width or window_height != self.window_height or
                     client_width != self.client_width or client_height != self.client_height or
-                    x != self.x or y != self.y or width != self.width or height != self.height or scaling != self.scaling) and (
+                    x != self.x or y != self.y or width != self.width or height != self.height or
+                    scaling != self.scaling or old_real_geometry != (
+                        self.real_x_offset,
+                        self.real_y_offset,
+                        self.real_width,
+                        self.real_height,
+                    )) and (
                         (x >= -1 and y >= -1) or self.visible):
                     self.x, self.y = x, y
                     self.window_width, self.window_height = window_width, window_height
@@ -337,8 +349,8 @@ class HwndWindow:
                     capture_x, capture_y = self.get_capture_origin()
                     communicate.window.emit(self.visible, capture_x, capture_y,
                                             self.window_width, self.window_height,
-                                            self.width,
-                                            self.height, self.scaling)
+                                            self.real_width or self.width,
+                                            self.real_height or self.height, self.scaling)
         except Exception as e:
             logger.error(f"do_update_window_size exception", e)
 
